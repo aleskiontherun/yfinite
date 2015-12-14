@@ -1,0 +1,2 @@
+# Prevent git from converting line endings
+* -crlf
