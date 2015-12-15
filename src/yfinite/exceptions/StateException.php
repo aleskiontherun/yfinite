@@ -6,7 +6,7 @@ use Exception;
 
 /**
  * Class StateException
- * @package common\components\state\ecxeptions
+ * @package yfinite
  * @author: Aleksei Vesnin <dizeee@dizeee.ru>
  */
 class StateException extends Exception

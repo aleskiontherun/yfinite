@@ -6,7 +6,7 @@ use yii\base\Object;
 
 /**
  * Class Transition
- * @package common\components\state
+ * @package yfinite
  * @author: Aleksei Vesnin <dizeee@dizeee.ru>
  */
 class Transition extends Object
@@ -36,7 +36,7 @@ class Transition extends Object
 	 * @param string $name
 	 * @param array $config
 	 */
-	public function __construct($name, array $config)
+	public function __construct($name, $config = [])
 	{
 		$this->name = $name;
 		parent::__construct($config);

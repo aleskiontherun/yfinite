@@ -4,7 +4,7 @@ namespace yfinite;
 
 /**
  * Class StatefulInterface
- * @package common\components\state
+ * @package yfinite
  * @author: Aleksei Vesnin <dizeee@dizeee.ru>
  */
 interface StatefulInterface

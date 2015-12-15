@@ -6,7 +6,7 @@ use yii\base\Event;
 
 /**
  * Class TransitionEvent
- * @package common\components\state
+ * @package yfinite
  * @author: Aleksei Vesnin <dizeee@dizeee.ru>
  */
 class TransitionEvent extends Event

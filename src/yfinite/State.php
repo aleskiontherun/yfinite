@@ -6,7 +6,7 @@ use yii\base\Object;
 
 /**
  * Class State
- * @package common\components\state
+ * @package yfinite
  * @author: Aleksei Vesnin <dizeee@dizeee.ru>
  */
 class State extends Object
@@ -26,7 +26,7 @@ class State extends Object
 	 * @param string $name
 	 * @param array $config
 	 */
-	public function __construct($name, array $config)
+	public function __construct($name, $config = [])
 	{
 		$this->name = $name;
 		parent::__construct($config);

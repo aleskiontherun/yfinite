@@ -2,18 +2,19 @@
 
 namespace yfinite;
 
+use Yii;
 use yii\base\Component;
 
 /**
  * Class StateMachine
- * @package common\components\state
+ * @package yfinite
  * @author: Aleksei Vesnin <dizeee@dizeee.ru>
  */
 class StateMachine extends Component
 {
 	const
-		EVENT_BEFORE_TRANSITION = 'state.transition.before',
-		EVENT_AFTER_TRANSITION = 'state.transition.after';
+		EVENT_BEFORE_TRANSITION = 'yfinite.transition.before',
+		EVENT_AFTER_TRANSITION = 'yfinite.transition.after';
 
 	public $name = 'default';
 
@@ -24,15 +25,18 @@ class StateMachine extends Component
 	public $states;
 	public $transitions;
 
+	private $_stateInstances = [];
+	private $_transitionInstances = [];
+
 	/**
 	 * @var StatefulInterface
 	 */
-	private $object;
+	private $_object;
 
 	/**
 	 * @var State
 	 */
-	private $currentState;
+	private $_currentState;
 
 	/**
 	 * StateMachine constructor.
@@ -41,7 +45,7 @@ class StateMachine extends Component
 	 */
 	public function __construct(StatefulInterface $object, $config = [])
 	{
-		$this->object = $object;
+		$this->_object = $object;
 		parent::__construct($config);
 	}
 
@@ -51,7 +55,7 @@ class StateMachine extends Component
 		{
 			$this->getObject()->setFiniteState($this->defaultStateName);
 		}
-		$this->currentState = $this->getState($this->getObject()->getFiniteState());
+		$this->_currentState = $this->getState($this->getObject()->getFiniteState());
 		parent::init();
 	}
 
@@ -60,7 +64,7 @@ class StateMachine extends Component
 	 */
 	public function getObject()
 	{
-		return $this->object;
+		return $this->_object;
 	}
 
 	/**
@@ -68,7 +72,7 @@ class StateMachine extends Component
 	 */
 	public function getCurrentState()
 	{
-		return $this->currentState;
+		return $this->_currentState;
 	}
 
 	/**
@@ -88,7 +92,7 @@ class StateMachine extends Component
 
 		$returnValue = $transition->applyTo($this);
 		//$this->stateAccessor->setState($this->object, $transition->stateName);
-		$this->currentState = $this->getState($transition->stateName);
+		$this->_currentState = $this->getState($transition->stateName);
 
 		$this->trigger(self::EVENT_AFTER_TRANSITION, $event);
 
@@ -113,7 +117,7 @@ class StateMachine extends Component
 	public function getTransition($name)
 	{
 		// Check if the transition is available
-		if (!array_key_exists($name, $this->transitions))
+		if (!isset($this->transitions[$name]))
 		{
 			throw new exceptions\TransitionException(sprintf(
 				'Unable to find a transition "%s" on object "%s".',
@@ -123,12 +127,14 @@ class StateMachine extends Component
 		}
 
 		// Initialize the transition object
-		if (!$this->transitions[$name] instanceof $this->defaultTransitionClass)
+		if (!isset($this->_transitionInstances[$name]))
 		{
-			$this->transitions[$name] = new $this->defaultTransitionClass($name, $this->transitions[$name]);
+			$config = array_merge(['class' => $this->defaultTransitionClass], $this->transitions[$name]);
+
+			$this->_transitionInstances[$name] = Yii::createObject($config, [$name]);
 		}
 
-		return $this->transitions[$name];
+		return $this->_transitionInstances[$name];
 	}
 
 	/**
@@ -138,8 +144,8 @@ class StateMachine extends Component
 	 */
 	public function getState($name)
 	{
-		// Check if the transition is available
-		if (!array_key_exists($name, $this->states))
+		// Check if the state is available
+		if (!isset($this->states[$name]))
 		{
 			throw new exceptions\StateException(sprintf(
 				'Unable to find a state "%s" on object "%s".',
@@ -148,13 +154,29 @@ class StateMachine extends Component
 			));
 		}
 
-		// Initialize the transition object
-		if (!$this->states[$name] instanceof $this->defaultStateClass)
+		// Initialize the state object
+		if (!isset($this->_stateInstances[$name]))
 		{
-			$this->states[$name] = new $this->defaultStateClass($name, $this->states[$name]);
+			$config = array_merge(['class' => $this->defaultStateClass], $this->states[$name]);
+
+			$this->_stateInstances[$name] = Yii::createObject($config, [$name]);
 		}
 
-		return $this->states[$name];
+		return $this->_stateInstances[$name];
+	}
+
+	public static function configClass(&$config, $default)
+	{
+		if (isset($config['class']))
+		{
+			$class = $config['class'];
+			unset($config['class']);
+		}
+		else
+		{
+			$class = $default;
+		}
+		return $class;
 	}
 
 }
