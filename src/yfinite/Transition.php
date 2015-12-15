@@ -43,6 +43,7 @@ class Transition extends Object
 	}
 
 	/**
+	 * Applies the transition to the specified state machine object.
 	 * @param StateMachine $machine
 	 * @return mixed
 	 * @throws exceptions\TransitionException
@@ -65,6 +66,7 @@ class Transition extends Object
 	}
 
 	/**
+	 * Returns a value indicating whether the transition can be applied to the specified state machine object.
 	 * @param StateMachine $machine
 	 * @return bool
 	 */

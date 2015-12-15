@@ -11,12 +11,20 @@ use yii\base\Event;
  */
 class TransitionEvent extends Event
 {
+	const
+		BEFORE_TRANSITION = 'yfinite.transition.before',
+		AFTER_TRANSITION = 'yfinite.transition.after';
 
 	/**
 	 * @var Transition
 	 */
 	public $transition;
 
+	/**
+	 * TransitionEvent constructor.
+	 * @param Transition $transition
+	 * @param array $config
+	 */
 	public function __construct(Transition $transition, $config = [])
 	{
 		$this->transition = $transition;

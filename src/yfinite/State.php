@@ -33,6 +33,7 @@ class State extends Object
 	}
 
 	/**
+	 * Returns a state property.
 	 * @param string $name
 	 * @return mixed
 	 */

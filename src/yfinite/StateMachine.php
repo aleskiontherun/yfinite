@@ -12,9 +12,6 @@ use yii\base\Component;
  */
 class StateMachine extends Component
 {
-	const
-		EVENT_BEFORE_TRANSITION = 'yfinite.transition.before',
-		EVENT_AFTER_TRANSITION = 'yfinite.transition.after';
 
 	public $name = 'default';
 
@@ -49,6 +46,10 @@ class StateMachine extends Component
 		parent::__construct($config);
 	}
 
+	/**
+	 * Initializes the state machine setting default object state if needed and retrieving current object state.
+	 * @throws exceptions\StateException
+	 */
 	public function init()
 	{
 		if ($this->defaultStateName && !$this->getObject()->getFiniteState())
@@ -60,6 +61,7 @@ class StateMachine extends Component
 	}
 
 	/**
+	 * Returns the stateful object.
 	 * @return StatefulInterface
 	 */
 	public function getObject()
@@ -68,6 +70,7 @@ class StateMachine extends Component
 	}
 
 	/**
+	 * Returns the current object state.
 	 * @return State
 	 */
 	public function getCurrentState()
@@ -76,6 +79,7 @@ class StateMachine extends Component
 	}
 
 	/**
+	 * Applies a transition to the stateful object.
 	 * @param string $transitionName
 	 * @param array $parameters
 	 * @return mixed
@@ -88,18 +92,18 @@ class StateMachine extends Component
 
 		$event = new TransitionEvent($transition);
 
-		$this->trigger(self::EVENT_BEFORE_TRANSITION, $event);
+		$this->trigger(TransitionEvent::BEFORE_TRANSITION, $event);
 
-		$returnValue = $transition->applyTo($this);
-		//$this->stateAccessor->setState($this->object, $transition->stateName);
+		$result              = $transition->applyTo($this);
 		$this->_currentState = $this->getState($transition->stateName);
 
-		$this->trigger(self::EVENT_AFTER_TRANSITION, $event);
+		$this->trigger(TransitionEvent::AFTER_TRANSITION, $event);
 
-		return $returnValue;
+		return $result;
 	}
 
 	/**
+	 * Returns a value indicating whether the specified transition can be applied to the stateful object.
 	 * @param string $transitionName
 	 * @return bool
 	 * @throws exceptions\TransitionException
@@ -110,6 +114,7 @@ class StateMachine extends Component
 	}
 
 	/**
+	 * Returns a transition instance.
 	 * @param string $name
 	 * @return Transition
 	 * @throws exceptions\TransitionException
@@ -138,6 +143,7 @@ class StateMachine extends Component
 	}
 
 	/**
+	 * Returns a state instance.
 	 * @param string $name
 	 * @return State
 	 * @throws exceptions\StateException
@@ -163,20 +169,6 @@ class StateMachine extends Component
 		}
 
 		return $this->_stateInstances[$name];
-	}
-
-	public static function configClass(&$config, $default)
-	{
-		if (isset($config['class']))
-		{
-			$class = $config['class'];
-			unset($config['class']);
-		}
-		else
-		{
-			$class = $default;
-		}
-		return $class;
 	}
 
 }
