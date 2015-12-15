@@ -1,6 +1,6 @@
 {
     "name": "dizeee/yfinite",
-    "description": "A Simple PHP Finite State Machine designe for Yii2 framework",
+    "description": "A Simple PHP Finite State Machine designed for Yii2 framework",
     "keywords": ["statemachine", "workflow", "state", "transition", "yii2"],
     "homepage": "https://github.com/dizeee/yfinite",
     "type": "library",
