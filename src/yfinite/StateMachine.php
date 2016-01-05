@@ -54,9 +54,12 @@ class StateMachine extends Component
 	{
 		if ($this->defaultStateName && !$this->getObject()->getFiniteState())
 		{
+			// Set the object default state
 			$this->getObject()->setFiniteState($this->defaultStateName);
 		}
-		$this->_currentState = $this->getState($this->getObject()->getFiniteState());
+
+		// Retrieve the current state
+		$this->reloadCurrentState();
 		parent::init();
 	}
 
@@ -81,24 +84,18 @@ class StateMachine extends Component
 	/**
 	 * Applies a transition to the stateful object.
 	 * @param string $transitionName
-	 * @param array $parameters
-	 * @return mixed
+	 * @param array $params
+	 * @return bool
 	 * @throws exceptions\StateException
 	 * @throws exceptions\TransitionException
 	 */
-	public function apply($transitionName, array $parameters = array())
+	public function apply($transitionName, array $params = [])
 	{
-		$transition = $this->getTransition($transitionName);
-
-		$event = new TransitionEvent($transition);
-
-		$this->trigger(TransitionEvent::BEFORE_TRANSITION, $event);
-
-		$result              = $transition->applyTo($this);
-		$this->_currentState = $this->getState($transition->stateName);
-
-		$this->trigger(TransitionEvent::AFTER_TRANSITION, $event);
-
+		$result = $this->getTransition($transitionName)->apply();
+		if ($result === true)
+		{
+			$this->reloadCurrentState();
+		}
 		return $result;
 	}
 
@@ -110,7 +107,7 @@ class StateMachine extends Component
 	 */
 	public function can($transitionName)
 	{
-		return $this->getTransition($transitionName)->canApplyTo($this);
+		return $this->getTransition($transitionName)->validate();
 	}
 
 	/**
@@ -119,7 +116,7 @@ class StateMachine extends Component
 	 * @return Transition
 	 * @throws exceptions\TransitionException
 	 */
-	public function getTransition($name)
+	protected function getTransition($name)
 	{
 		// Check if the transition is available
 		if (!isset($this->transitions[$name]))
@@ -136,7 +133,7 @@ class StateMachine extends Component
 		{
 			$config = array_merge(['class' => $this->defaultTransitionClass], $this->transitions[$name]);
 
-			$this->_transitionInstances[$name] = Yii::createObject($config, [$name]);
+			$this->_transitionInstances[$name] = Yii::createObject($config, [$name, $this->getObject()]);
 		}
 
 		return $this->_transitionInstances[$name];
@@ -148,7 +145,7 @@ class StateMachine extends Component
 	 * @return State
 	 * @throws exceptions\StateException
 	 */
-	public function getState($name)
+	protected function getState($name)
 	{
 		// Check if the state is available
 		if (!isset($this->states[$name]))
@@ -171,4 +168,20 @@ class StateMachine extends Component
 		return $this->_stateInstances[$name];
 	}
 
+	/**
+	 * Retrieve and store the stateful object current state
+	 * @throws exceptions\StateException
+	 */
+	protected function reloadCurrentState()
+	{
+		$this->_currentState = $this->getState($this->getObject()->getFiniteState());
+	}
+
+	/**
+	 * @return string
+	 */
+	public function __toString()
+	{
+		return $this->name;
+	}
 }

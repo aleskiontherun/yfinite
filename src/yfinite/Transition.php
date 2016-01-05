@@ -2,14 +2,15 @@
 
 namespace yfinite;
 
-use yii\base\Object;
+use yfinite\exceptions\TransitionException;
+use yii\base\Component;
 
 /**
  * Class Transition
  * @package yfinite
  * @author: Aleksei Vesnin <dizeee@dizeee.ru>
  */
-class Transition extends Object
+class Transition extends Component
 {
 	/**
 	 * @var string
@@ -24,68 +25,85 @@ class Transition extends Object
 	/**
 	 * @var string
 	 */
-	public $stateName;
+	public $to;
 
 	/**
-	 * @var array
+	 * @var callable
 	 */
-	protected $errors = [];
+	public $guard;
+
+	/**
+	 * @var StatefulInterface
+	 */
+	private $_object;
 
 	/**
 	 * Transition constructor.
 	 * @param string $name
+	 * @param StatefulInterface $object
 	 * @param array $config
 	 */
-	public function __construct($name, $config = [])
+	public function __construct($name, StatefulInterface $object, $config = [])
 	{
-		$this->name = $name;
+		$this->name    = $name;
+		$this->_object = $object;
 		parent::__construct($config);
 	}
 
 	/**
-	 * Applies the transition to the specified state machine object.
-	 * @param StateMachine $machine
-	 * @return mixed
+	 * Applies the transition to the stateful object.
+	 * @return bool
 	 * @throws exceptions\TransitionException
 	 */
-	public function applyTo(StateMachine $machine)
+	public function apply()
 	{
-		if (!$this->canApplyTo($machine))
+		if (!$this->validate())
 		{
-			throw new exceptions\TransitionException(sprintf(
-				'The "%s" transition can not be applied to the "%s" state of object "%s".',
-				$this->name,
-				$machine->getCurrentState()->name,
-				get_class($machine->getObject())
-			));
+			return false;
 		}
 
-		$machine->getObject()->setFiniteState($this->stateName);
+		// TODO: Store object initial state?
+
+		$object = $this->getObject();
+		$event  = new TransitionEvent($this);
+
+		$this->trigger(TransitionEvent::BEFORE, $event);
+
+		$object->setFiniteState($this->to);
+
+		$this->trigger(TransitionEvent::AFTER, $event);
 
 		return true;
 	}
 
 	/**
-	 * Returns a value indicating whether the transition can be applied to the specified state machine object.
-	 * @param StateMachine $machine
+	 * Returns a value indicating whether the transition can be applied to the stateful object.
 	 * @return bool
+	 * @throws TransitionException
 	 */
-	public function canApplyTo(StateMachine $machine)
+	public function validate()
 	{
-		$state = $machine->getCurrentState();
+		$object = $this->getObject();
+		$state  = $object->getFiniteState();
 
-		$this->errors = [];
-		if (!in_array($state->name, $this->from, true))
+		if (!in_array($state, $this->from, true))
 		{
-			$this->errors[] = sprintf('Invalid machine state "%s". Must be one of "%s".', $state->name, implode('", "', $this->from));
+			//throw new TransitionException(sprintf('Invalid object state "%s". Must be one of "%s".', $state, implode('", "', $this->from)));
+			return false;
 		}
-
-		return count($this->errors) === 0;
+		elseif (is_callable($this->guard) && call_user_func($this->guard, $object) === false)
+		{
+			return false;
+		}
+		return true;
 	}
 
-	public function getErrors()
+	/**
+	 * @return StatefulInterface
+	 */
+	public function getObject()
 	{
-		return $this->errors;
+		return $this->_object;
 	}
 
 	/**
