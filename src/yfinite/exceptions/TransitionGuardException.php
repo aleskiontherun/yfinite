@@ -2,20 +2,18 @@
 
 namespace yfinite\exceptions;
 
-use yii\base\Exception;
-
 /**
- * Class StateException
+ * Class TransitionGuardException
  * @package yfinite
  * @author: Aleksei Vesnin <dizeee@dizeee.ru>
  */
-class StateException extends Exception
+class TransitionGuardException extends TransitionException
 {
 	/**
 	 * @inheritdoc
 	 */
 	public function getName()
 	{
-		return 'yFinite State Exception';
+		return 'yFinite Transition Guard Exception';
 	}
 }

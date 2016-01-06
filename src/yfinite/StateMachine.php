@@ -2,6 +2,7 @@
 
 namespace yfinite;
 
+use yfinite\exceptions\TransitionException;
 use Yii;
 use yii\base\Component;
 
@@ -107,7 +108,14 @@ class StateMachine extends Component
 	 */
 	public function can($transitionName)
 	{
-		return $this->getTransition($transitionName)->validate();
+		try
+		{
+			return $this->getTransition($transitionName)->validate();
+		}
+		catch (TransitionException $e)
+		{
+			return false;
+		}
 	}
 
 	/**

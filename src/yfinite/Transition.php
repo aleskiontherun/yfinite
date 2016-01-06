@@ -3,6 +3,7 @@
 namespace yfinite;
 
 use yfinite\exceptions\TransitionException;
+use yfinite\exceptions\TransitionGuardException;
 use yii\base\Component;
 
 /**
@@ -33,6 +34,11 @@ class Transition extends Component
 	public $guard;
 
 	/**
+	 * @var string
+	 */
+	private $_initialState;
+
+	/**
 	 * @var StatefulInterface
 	 */
 	private $_object;
@@ -57,20 +63,16 @@ class Transition extends Component
 	 */
 	public function apply()
 	{
-		if (!$this->validate())
-		{
-			return false;
-		}
-
-		// TODO: Store object initial state?
+		// Check the transition is valid. A TransitionException will be thrown if it's not.
+		$this->validate();
 
 		$object = $this->getObject();
-		$event  = new TransitionEvent($this);
 
+		$event = new TransitionEvent($this);
 		$this->trigger(TransitionEvent::BEFORE, $event);
 
+		// Apply the new state to the object
 		$object->setFiniteState($this->to);
-
 		$this->trigger(TransitionEvent::AFTER, $event);
 
 		return true;
@@ -84,16 +86,16 @@ class Transition extends Component
 	public function validate()
 	{
 		$object = $this->getObject();
-		$state  = $object->getFiniteState();
+		// Store the object initial state
+		$this->_initialState = $object->getFiniteState();
 
-		if (!in_array($state, $this->from, true))
+		if (!in_array($this->_initialState, $this->from, true))
 		{
-			//throw new TransitionException(sprintf('Invalid object state "%s". Must be one of "%s".', $state, implode('", "', $this->from)));
-			return false;
+			throw new TransitionException(sprintf('Invalid object state "%s" in transition "%s". Must be one of "%s".', $this->_initialState, $this->name, implode('", "', $this->from)));
 		}
-		elseif (is_callable($this->guard) && call_user_func($this->guard, $object) === false)
+		elseif (is_callable($this->guard) && call_user_func($this->guard, $this) !== true)
 		{
-			return false;
+			throw new TransitionGuardException(sprintf('Transition guard didn\'t return true in transition "%s".', $this->name));
 		}
 		return true;
 	}
@@ -104,6 +106,15 @@ class Transition extends Component
 	public function getObject()
 	{
 		return $this->_object;
+	}
+
+	/**
+	 * Returns the object state before the transition
+	 * @return string
+	 */
+	public function getInitialState()
+	{
+		return $this->_initialState;
 	}
 
 	/**

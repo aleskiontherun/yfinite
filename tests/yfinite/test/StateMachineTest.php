@@ -3,8 +3,10 @@
 namespace yfinite\test;
 
 use PHPUnit_Framework_TestCase;
+use yfinite\exceptions\TransitionException;
 use yfinite\StatefulInterface;
 use yfinite\StateMachine;
+use yfinite\Transition;
 
 class StateMachineTest extends PHPUnit_Framework_TestCase
 {
@@ -22,7 +24,7 @@ class StateMachineTest extends PHPUnit_Framework_TestCase
 			'states'           => [
 				'new'         => ['properties' => ['editable' => true]],
 				'in_progress' => ['properties' => ['editable' => true]],
-				'complete'    => [],
+				'completed'   => [],
 			],
 			'transitions'      => [
 				'start'  => [
@@ -31,11 +33,8 @@ class StateMachineTest extends PHPUnit_Framework_TestCase
 				],
 				'finish' => [
 					'from'  => ['in_progress'],
-					'to'    => 'complete',
-					'guard' => function (StatefulObject $object)
-					{
-						return $object->validate();
-					}
+					'to'    => 'completed',
+					'guard' => [$this, 'guardTest'],
 				],
 			],
 		]);
@@ -45,32 +44,25 @@ class StateMachineTest extends PHPUnit_Framework_TestCase
 	{
 		// Initial state
 		static::assertEquals($this->object, $this->stateMachine->getObject());
-		static::assertEquals($this->object->state, 'new');
-		static::assertTrue($this->stateMachine->can('start'));
-		static::assertFalse($this->stateMachine->can('finish'));
+		$this->assertState('new');
 		static::assertTrue($this->stateMachine->getCurrentState()->getProperty('editable'));
 
-		// Invalid transitions
-		static::assertFalse($this->stateMachine->apply('finish'));
-		$this->assertState('new');
+		// Invalid transition
+		$this->assertInvalidTransition('finish');
 
 		// Apply valid transition
-		static::assertTrue($this->stateMachine->apply('start'));
-		$this->assertState('in_progress');
+		$this->assertApplyTransition('start', 'in_progress');
 		static::assertTrue($this->stateMachine->getCurrentState()->getProperty('editable'));
-		static::assertFalse($this->stateMachine->can('start'));
+		$this->assertInvalidTransition('start');
 
 		// Apply final transition with guard
-		static::assertFalse($this->stateMachine->can('finish'));
-		static::assertFalse($this->stateMachine->apply('finish'));
+		$this->assertInvalidTransition('finish');
 		$this->assertState('in_progress');
 		$this->object->data = 'Some Data';
-		static::assertTrue($this->stateMachine->can('finish'));
-		static::assertTrue($this->stateMachine->apply('finish'));
-		$this->assertState('complete');
+		$this->assertApplyTransition('finish', 'completed');
 		static::assertNotTrue($this->stateMachine->getCurrentState()->getProperty('editable'));
-		static::assertFalse($this->stateMachine->can('start'));
-		static::assertFalse($this->stateMachine->can('finish'));
+		$this->assertInvalidTransition('start');
+		$this->assertInvalidTransition('finish');
 	}
 
 	/**
@@ -82,11 +74,15 @@ class StateMachineTest extends PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @expectedException \yfinite\exceptions\TransitionException
+	 * @param Transition $transition
+	 * @return bool
 	 */
-	public function testCanInvalidTransition()
+	public function guardTest(Transition $transition)
 	{
-		$this->stateMachine->can('invalid');
+		static::assertEquals($transition->getInitialState(), 'in_progress');
+		static::assertEquals($this->object, $transition->getObject());
+
+		return $this->object->validate();
 	}
 
 	/**
@@ -96,6 +92,30 @@ class StateMachineTest extends PHPUnit_Framework_TestCase
 	{
 		static::assertEquals($this->object->state, $state);
 		static::assertEquals((string)$this->stateMachine->getCurrentState(), $state);
+	}
+
+	/**
+	 * @param string $transition
+	 */
+	protected function assertInvalidTransition($transition)
+	{
+		static::assertFalse($this->stateMachine->can($transition));
+		try
+		{
+			$this->stateMachine->apply($transition);
+		}
+		catch (TransitionException $e)
+		{
+			return;
+		}
+		static::fail(sprintf('TransitionException expected for transition "%s".', $transition));
+	}
+
+	protected function assertApplyTransition($transition, $state)
+	{
+		static::assertTrue($this->stateMachine->can($transition));
+		static::assertTrue($this->stateMachine->apply($transition));
+		$this->assertState($state);
 	}
 }
 

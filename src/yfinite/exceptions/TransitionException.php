@@ -2,7 +2,7 @@
 
 namespace yfinite\exceptions;
 
-use Exception;
+use yii\base\Exception;
 
 /**
  * Class TransitionException
@@ -11,5 +11,11 @@ use Exception;
  */
 class TransitionException extends Exception
 {
-
+	/**
+	 * @inheritdoc
+	 */
+	public function getName()
+	{
+		return 'yFinite Transition Exception';
+	}
 }
