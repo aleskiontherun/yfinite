@@ -58,9 +58,6 @@ class StateMachine extends Component
 			// Set the object default state
 			$this->getObject()->setFiniteState($this->defaultStateName);
 		}
-
-		// Retrieve the current state
-		$this->reloadCurrentState();
 		parent::init();
 	}
 
@@ -79,6 +76,10 @@ class StateMachine extends Component
 	 */
 	public function getCurrentState()
 	{
+		if ($this->_currentState === null)
+		{
+			$this->_currentState = $this->getState($this->getObject()->getFiniteState());
+		}
 		return $this->_currentState;
 	}
 
@@ -95,7 +96,8 @@ class StateMachine extends Component
 		$result = $this->getTransition($transitionName)->apply();
 		if ($result === true)
 		{
-			$this->reloadCurrentState();
+			// Reset current state
+			$this->_currentState = null;
 		}
 		return $result;
 	}
@@ -174,15 +176,6 @@ class StateMachine extends Component
 		}
 
 		return $this->_stateInstances[$name];
-	}
-
-	/**
-	 * Retrieve and store the stateful object current state
-	 * @throws exceptions\StateException
-	 */
-	protected function reloadCurrentState()
-	{
-		$this->_currentState = $this->getState($this->getObject()->getFiniteState());
 	}
 
 	/**
