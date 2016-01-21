@@ -12,8 +12,9 @@ use yii\base\Event;
 class TransitionEvent extends Event
 {
 	const
-		BEFORE = 'yfinite.transition.before',
-		AFTER = 'yfinite.transition.after';
+		BEFORE_VALIDATE = 'yfinite.transition.beforeValidate',
+		BEFORE_TRANSITION = 'yfinite.transition.beforeTransition',
+		AFTER_TRANSITION = 'yfinite.transition.afterTransition';
 
 	/**
 	 * @var Transition

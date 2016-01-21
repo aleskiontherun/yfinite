@@ -15,7 +15,7 @@ require_once __DIR__ . '/../../vendor/yiisoft/yii2/Yii.php';
 $person       = new Person;
 $stateMachine = PersonStates::createStateMachine($person);
 
-Event::on(Transition::CLASS, TransitionEvent::BEFORE, function (TransitionEvent $event)
+Event::on(Transition::CLASS, TransitionEvent::BEFORE_TRANSITION, function (TransitionEvent $event)
 {
 	printf("Transitioned to '%s' state\n", $event->transition->to);
 });

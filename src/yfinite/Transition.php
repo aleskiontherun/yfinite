@@ -63,17 +63,19 @@ class Transition extends Component
 	 */
 	public function apply()
 	{
+		$event = new TransitionEvent($this);
+		$this->trigger(TransitionEvent::BEFORE_VALIDATE, $event);
+
 		// Check the transition is valid. A TransitionException will be thrown if it's not.
 		$this->validate();
 
 		$object = $this->getObject();
 
-		$event = new TransitionEvent($this);
-		$this->trigger(TransitionEvent::BEFORE, $event);
+		$this->trigger(TransitionEvent::BEFORE_TRANSITION, $event);
 
 		// Apply the new state to the object
 		$object->setFiniteState($this->to);
-		$this->trigger(TransitionEvent::AFTER, $event);
+		$this->trigger(TransitionEvent::AFTER_TRANSITION, $event);
 
 		return true;
 	}
