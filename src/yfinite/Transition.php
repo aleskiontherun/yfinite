@@ -71,11 +71,11 @@ class Transition extends Component
 
 		$object = $this->getObject();
 
-		$this->trigger(TransitionEvent::BEFORE_TRANSITION, $event);
+		$this->trigger(TransitionEvent::BEFORE_APPLY, $event);
 
 		// Apply the new state to the object
 		$object->setFiniteState($this->to);
-		$this->trigger(TransitionEvent::AFTER_TRANSITION, $event);
+		$this->trigger(TransitionEvent::AFTER_APPLY, $event);
 
 		return true;
 	}

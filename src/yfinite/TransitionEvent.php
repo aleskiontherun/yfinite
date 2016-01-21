@@ -13,8 +13,8 @@ class TransitionEvent extends Event
 {
 	const
 		BEFORE_VALIDATE = 'yfinite.transition.beforeValidate',
-		BEFORE_TRANSITION = 'yfinite.transition.beforeTransition',
-		AFTER_TRANSITION = 'yfinite.transition.afterTransition';
+		BEFORE_APPLY = 'yfinite.transition.beforeApply',
+		AFTER_APPLY = 'yfinite.transition.afterApply';
 
 	/**
 	 * @var Transition
