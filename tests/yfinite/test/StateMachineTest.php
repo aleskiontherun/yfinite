@@ -4,6 +4,7 @@ namespace yfinite\test;
 
 use PHPUnit_Framework_TestCase;
 use yfinite\exceptions\TransitionException;
+use yfinite\exceptions\TransitionGuardException;
 use yfinite\StatefulInterface;
 use yfinite\StateMachine;
 use yfinite\Transition;
@@ -76,11 +77,15 @@ class StateMachineTest extends PHPUnit_Framework_TestCase
 	/**
 	 * @param Transition $transition
 	 * @return bool
+	 * @throws TransitionGuardException
 	 */
 	public function guardTest(Transition $transition)
 	{
-		static::assertEquals($transition->getInitialState(), 'in_progress');
 		static::assertEquals($this->object, $transition->getObject());
+		if ($transition->getObject()->getFiniteState() !== 'in_progress')
+		{
+			throw new TransitionGuardException('Invalid object state.');
+		}
 
 		return $this->object->validate();
 	}

@@ -59,7 +59,8 @@ class Transition extends Component
 	/**
 	 * Applies the transition to the stateful object.
 	 * @return bool
-	 * @throws exceptions\TransitionException
+	 * @throws TransitionException
+	 * @throws TransitionGuardException
 	 */
 	public function apply()
 	{
@@ -69,12 +70,13 @@ class Transition extends Component
 		// Check the transition is valid. A TransitionException will be thrown if it's not.
 		$this->validate();
 
-		$object = $this->getObject();
-
 		$this->trigger(TransitionEvent::BEFORE_APPLY, $event);
 
 		// Apply the new state to the object
+		$object              = $this->getObject();
+		$this->_initialState = $object->getFiniteState();
 		$object->setFiniteState($this->to);
+
 		$this->trigger(TransitionEvent::AFTER_APPLY, $event);
 
 		return true;
@@ -84,21 +86,21 @@ class Transition extends Component
 	 * Returns a value indicating whether the transition can be applied to the stateful object.
 	 * @return bool
 	 * @throws TransitionException
+	 * @throws TransitionGuardException
 	 */
 	public function validate()
 	{
-		$object = $this->getObject();
-		// Store the object initial state
-		$this->_initialState = $object->getFiniteState();
+		$currentState = $this->getObject()->getFiniteState();
 
-		if (!in_array($this->_initialState, $this->from, true))
+		if (!in_array($currentState, $this->from, true))
 		{
-			throw new TransitionException(sprintf('Invalid object state "%s" in transition "%s". Must be one of "%s".', $this->_initialState, $this->name, implode('", "', $this->from)));
+			throw new TransitionException(sprintf('Invalid object state "%s" in transition "%s". Must be one of "%s".', $currentState, $this->name, implode('", "', $this->from)));
 		}
 		elseif (is_callable($this->guard) && call_user_func($this->guard, $this) !== true)
 		{
 			throw new TransitionGuardException(sprintf('Transition guard didn\'t return true in transition "%s".', $this->name));
 		}
+
 		return true;
 	}
 
@@ -112,6 +114,7 @@ class Transition extends Component
 
 	/**
 	 * Returns the object state before the transition
+	 * Useful only in the {@link TransitionEvent::AFTER_APPLY} event
 	 * @return string
 	 */
 	public function getInitialState()

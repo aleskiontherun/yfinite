@@ -106,7 +106,6 @@ class StateMachine extends Component
 	 * Returns a value indicating whether the specified transition can be applied to the stateful object.
 	 * @param string $transitionName
 	 * @return bool
-	 * @throws exceptions\TransitionException
 	 */
 	public function can($transitionName)
 	{
@@ -118,6 +117,16 @@ class StateMachine extends Component
 		{
 			return false;
 		}
+	}
+
+	/**
+	 * Returns a value indicating whether the stateful object in in the specified state.
+	 * @param string $state
+	 * @return bool
+	 */
+	public function in($state)
+	{
+		return $this->getObject()->getFiniteState() === $state;
 	}
 
 	/**
